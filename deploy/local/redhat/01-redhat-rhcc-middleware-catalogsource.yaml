@@ -1,0 +1,18 @@
+##---
+# Source: olm/templates/11-tectoniccomponents.catalogsource.yaml
+
+#! validate-crd: ../../deploy/chart/templates/05-catalogsource.crd.yaml
+#! parse-kind: CatalogSource
+apiVersion: app.coreos.com/v1alpha1
+kind: CatalogSource-v1
+metadata:
+  name: redhat-rhcc-middleware-components
+  namespace: rhcc
+  annotations:
+    tectonic-operators.coreos.com/upgrade-strategy: 'DeleteAndRecreate'
+spec:
+  name: redhat-rhcc-middleware-components
+  sourceType: internal
+  configMap: redhat-rhcc-middleware-components
+  displayName: Middleware from RedHat Container Catalog 
+  publisher: RedHat

@@ -1,0 +1,9 @@
+apiVersion: app.coreos.com/v1alpha1
+kind: InstallPlan-v1
+metadata:
+  namespace: rhcc
+  name: jbossapp-operator.v0.1.0
+spec:
+  clusterServiceVersionNames:
+  - jbossapp-operator.v0.1.0
+  approval: Automatic

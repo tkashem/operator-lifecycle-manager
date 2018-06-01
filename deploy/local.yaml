@@ -1,0 +1,31 @@
+rbacApiVersion: authorization.openshift.io
+namespace: rhcc
+catalog_namespace: rhcc
+alm:
+  replicaCount: 1
+  image:
+    ref: docker.io/tohinkashem/olm:local
+    pullPolicy: IfNotPresent
+  service:
+    internalPort: 8080
+
+catalog:
+  replicaCount: 1
+  image:
+    ref: docker.io/tohinkashem/catalog:local
+    pullPolicy: IfNotPresent
+  service:
+    internalPort: 8080
+
+servicebroker:
+  replicaCount: 1
+  image:
+    ref: docker.io/tohinkashem/olm-service-broker:local
+    pullPolicy: IfNotPresent
+  service:
+    internalPort: 8080
+    brokerPort: 8005
+    
+catalog_sources:
+ - tectonic-ocs
+ - tectonic-components
