@@ -4,6 +4,8 @@
   metadata:
     name: packageserver.v{{ .Chart.Version }}
     namespace: {{ .Values.namespace }}
+    labels:
+      olm.cluster.reporting: "true"
   spec:
     displayName: Package Server
     description: Represents an Operator package that is available from a given CatalogSource which will resolve to a ClusterServiceVersion.

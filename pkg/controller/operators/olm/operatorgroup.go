@@ -121,7 +121,7 @@ func (a *Operator) annotateCSVs(group *v1.OperatorGroup, targetNamespaces []stri
 	updateErrs := []error{}
 	targetNamespaceSet := resolver.NewNamespaceSet(targetNamespaces)
 
-	for _, csv := range a.csvSet(group.GetNamespace(), v1alpha1.CSVPhaseAny) {
+	for _, csv := range a.csvSet.WithNamespace(group.GetNamespace(), v1alpha1.CSVPhaseAny) {
 		logger := logger.WithField("csv", csv.GetName())
 
 		originalNamespacesAnnotation, _ := a.copyOperatorGroupAnnotations(&csv.ObjectMeta)[v1.OperatorGroupTargetsAnnotationKey]
@@ -159,7 +159,7 @@ func (a *Operator) annotateCSVs(group *v1.OperatorGroup, targetNamespaces []stri
 }
 
 func (a *Operator) providedAPIsFromCSVs(group *v1.OperatorGroup, logger *logrus.Entry) resolver.APISet {
-	set := a.csvSet(group.Namespace, v1alpha1.CSVPhaseAny)
+	set := a.csvSet.WithNamespace(group.Namespace, v1alpha1.CSVPhaseAny)
 	providedAPIsFromCSVs := make(resolver.APISet)
 	for _, csv := range set {
 		// Don't union providedAPIsFromCSVs if the CSV is copied (member of another OperatorGroup)

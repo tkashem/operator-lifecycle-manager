@@ -59,6 +59,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20190401085232-94e1e7b7574c
 	k8s.io/kubernetes v1.12.8
 	k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7 // indirect
+	sigs.k8s.io/controller-runtime v0.1.10
 )
 
 replace (
