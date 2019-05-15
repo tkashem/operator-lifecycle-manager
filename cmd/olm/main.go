@@ -25,8 +25,9 @@ import (
 )
 
 const (
-	defaultWakeupInterval = 5 * time.Minute
-	defaultOperatorName   = ""
+	defaultWakeupInterval          = 5 * time.Minute
+	defaultOperatorName            = ""
+	defaultPackageServerStatusName = ""
 )
 
 // config flags defined globally so that they appear on the test binary as well
@@ -44,6 +45,9 @@ var (
 
 	writeStatusName = flag.String(
 		"writeStatusName", defaultOperatorName, "ClusterOperator name in which to write status, set to \"\" to disable.")
+
+	writePackageServerStatusName = flag.String(
+		"writePackageServerStatusName", defaultPackageServerStatusName, "ClusterOperator name in which to write status for package API server, set to \"\" to disable.")
 
 	debug = flag.Bool(
 		"debug", false, "use debug log level")
@@ -164,6 +168,18 @@ func main() {
 
 	if *writeStatusName != "" {
 		operatorstatus.MonitorClusterStatus(*writeStatusName, sync, stopCh, opClient, configClient)
+	}
+
+	if *writePackageServerStatusName != "" {
+		logger.Info("Initializing cluster operator monitor for package server")
+
+		names := *writePackageServerStatusName
+		monitor, sender := operatorstatus.NewMonitor(names, logger, opClient, configClient)
+
+		handler := operatorstatus.NewCSVWatchNotificationHandler(logger, operator.GetCSVSetGenerator(), operator.GetReplaceFinder(), sender)
+		operator.RegisterCSVWatchNotification(handler)
+
+		go monitor.Run(stopCh)
 	}
 
 	<-done
