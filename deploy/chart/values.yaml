@@ -5,6 +5,7 @@ catalog_namespace: operator-lifecycle-manager
 operator_namespace: operators
 minKubeVersion: 1.11.0
 writeStatusName: '""'
+writePackageServerStatusName: '""'
 imagestream: false
 debug: false
 installType: upstream
