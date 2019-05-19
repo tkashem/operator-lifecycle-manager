@@ -3,6 +3,8 @@ apiVersion: v1
 metadata:
   name: olm-operators
   namespace: openshift-operator-lifecycle-manager
+  labels:
+    olm.clusteroperator.name: operator-lifecycle-manager-packageserver
 data:
   customResourceDefinitions: |-
   clusterServiceVersions: |-

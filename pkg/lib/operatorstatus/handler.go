@@ -51,7 +51,7 @@ func (h *handler) OnAddOrUpdate(in *v1alpha1.ClusterServiceVersion) {
 		return
 	}
 
-	h.logger.Debugf("OnAddOrUpdate - found a matching CSV name=%s phase=%s, sending notification", in.GetName(), in.Status.Phase)
+	h.logger.Infof("OnAddOrUpdate - found a matching CSV name=%s phase=%s, sending notification", in.GetName(), in.Status.Phase)
 
 	final := h.getLatestInReplacementChain(in)
 	context := &NotificationContext{
@@ -70,7 +70,7 @@ func (h *handler) OnDelete(in *v1alpha1.ClusterServiceVersion) {
 		return
 	}
 
-	h.logger.Debugf("OnDelete - found a matching CSV name=%s phase=%s, sending notification", in.GetName(), in.Status.Phase)
+	h.logger.Infof("OnDelete - found a matching CSV name=%s phase=%s, sending notification", in.GetName(), in.Status.Phase)
 
 	final := h.getLatestInReplacementChain(in)
 	context := &NotificationContext{
