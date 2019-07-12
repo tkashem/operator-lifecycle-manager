@@ -406,6 +406,31 @@ func createSubscription(t *testing.T, crc versioned.Interface, namespace, name, 
 	return buildSubscriptionCleanupFunc(t, crc, subscription)
 }
 
+func createSubscriptionWithPodConfig(t *testing.T, crc versioned.Interface, namespace, name, packageName, channel string, approval v1alpha1.Approval, config v1alpha1.SubscriptionConfig) cleanupFunc {
+	subscription := &v1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       v1alpha1.SubscriptionKind,
+			APIVersion: v1alpha1.SubscriptionCRDAPIVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Spec: &v1alpha1.SubscriptionSpec{
+			CatalogSource:          catalogSourceName,
+			CatalogSourceNamespace: namespace,
+			Package:                packageName,
+			Channel:                channel,
+			InstallPlanApproval:    approval,
+			Config:                 config,
+		},
+	}
+
+	subscription, err := crc.OperatorsV1alpha1().Subscriptions(namespace).Create(subscription)
+	require.NoError(t, err)
+	return buildSubscriptionCleanupFunc(t, crc, subscription)
+}
+
 func createSubscriptionForCatalog(t *testing.T, crc versioned.Interface, namespace, name, catalog, packageName, channel, startingCSV string, approval v1alpha1.Approval) cleanupFunc {
 	subscription := &v1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
@@ -1085,6 +1110,83 @@ func TestSubscriptionInstallPlanStatus(t *testing.T) {
 			require.Equal(t, v1alpha1.ReferencedInstallPlanNotFound, cond.Reason)
 		default:
 			require.True(t, hashEqual(cond, sub.Status.GetCondition(condType)), "non-installplan status condition changed")
+		}
+	}
+}
+
+func TestCreateNewSubscriptionWithPodConfig(t *testing.T) {
+	defer cleaner.NotifyTestComplete(t, true)
+
+	c := newKubeClient(t)
+	crc := newCRClient(t)
+	defer func() {
+		require.NoError(t, crc.OperatorsV1alpha1().Subscriptions(testNamespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{}))
+	}()
+	require.NoError(t, initCatalog(t, c, crc))
+
+	podConfig := v1alpha1.SubscriptionConfig{
+		Env: []corev1.EnvVar{
+			corev1.EnvVar{
+				Name:  "MY_ENV_VARIABLE1",
+				Value: "value1",
+			},
+			corev1.EnvVar{
+				Name:  "MY_ENV_VARIABLE2",
+				Value: "value2",
+			},			
+		},
+	}
+
+	cleanup := createSubscriptionWithPodConfig(t, crc, testNamespace, testSubscriptionName, testPackageName, betaChannel, v1alpha1.ApprovalAutomatic, podConfig)
+	defer cleanup()
+
+	subscription, err := fetchSubscription(t, crc, testNamespace, testSubscriptionName, subscriptionStateAtLatestChecker)
+	require.NoError(t, err)
+	require.NotNil(t, subscription)
+
+	csv, err := fetchCSV(t, crc, subscription.Status.CurrentCSV, testNamespace, buildCSVConditionChecker(v1alpha1.CSVPhaseSucceeded))
+	require.NoError(t, err)
+
+	checkDeployment(t, c, csv, podConfig.Env)
+}
+
+func checkDeployment(t *testing.T, client operatorclient.ClientInterface, csv *v1alpha1.ClusterServiceVersion, envVar []corev1.EnvVar) {
+	resolver := install.StrategyResolver{}
+
+	strategy, err := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
+	require.NoError(t, err)
+
+	strategyDetailsDeployment, ok := strategy.(*install.StrategyDetailsDeployment)
+	require.Truef(t, ok, "could not cast install strategy as type %T", strategyDetailsDeployment)
+
+	find := func(envVar []corev1.EnvVar, name string) (env *corev1.EnvVar, found bool) {
+		for i := range envVar {
+			if name == envVar[i].Name {
+				found = true
+				env = &envVar[i]
+
+				break
+			}
+		}
+
+		return
+	}
+
+	check := func(container *corev1.Container) {
+		for _, e := range envVar {
+			existing, found := find(container.Env, e.Name)
+			require.Truef(t, found, "env variable name=%s not injected", e.Name)
+			require.NotNil(t, existing)
+			require.Equalf(t, e.Value, existing.Value, "env variable value does not match %s=%s", e.Name, e.Value)
+		}
+	}
+
+	for _, deploymentSpec := range strategyDetailsDeployment.DeploymentSpecs {
+		deployment, err := client.KubernetesInterface().AppsV1().Deployments(csv.GetNamespace()).Get(deploymentSpec.Name, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		for i := range deployment.Spec.Template.Spec.Containers {
+			check(&deployment.Spec.Template.Spec.Containers[i])
 		}
 	}
 }
