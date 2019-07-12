@@ -52,6 +52,13 @@ func (d *StrategyDetailsDeployment) GetStrategyName() string {
 var _ Strategy = &StrategyDetailsDeployment{}
 var _ StrategyInstaller = &StrategyDeploymentInstaller{}
 
+// DeploymentInitializerFunc takes a deployment object and appropriately
+// initializes it for install.
+//
+// Before a deployment is created on the cluster, we can run a series of
+// initializer functions that will properly initialize the deployment object.
+type DeploymentInitializerFunc func(deployment *appsv1.Deployment) error
+
 func NewStrategyDeploymentInstaller(strategyClient wrappers.InstallStrategyDeploymentInterface, templateAnnotations map[string]string, owner ownerutil.Owner, previousStrategy Strategy) StrategyInstaller {
 	return &StrategyDeploymentInstaller{
 		strategyClient:      strategyClient,
