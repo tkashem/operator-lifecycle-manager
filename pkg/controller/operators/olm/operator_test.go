@@ -61,7 +61,6 @@ import (
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/lib/ownerutil"
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/lib/scoped"
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	csvutility "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/csv"
 	configfake "github.com/openshift/client-go/config/clientset/versioned/fake"
 )
 

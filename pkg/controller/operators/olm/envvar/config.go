@@ -25,7 +25,7 @@ func (o *operatorConfig) GetOperatorConfig(ownerCSV ownerutil.Owner) (overrides 
 
 	owner := findOwner(list, ownerCSV)
 	if owner == nil {
-		o.logger.Warnf("failed to get owner subscription for csv name=%s", ownerCSV.GetName(), listErr)
+		o.logger.WithError(listErr).Warnf("failed to get owner subscription for csv name=%s", ownerCSV.GetName())
 		return
 	}
 
